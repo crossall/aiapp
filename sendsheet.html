@@ -1,0 +1,100 @@
+﻿<div>Teachable Machine Image Model</div>
+<button type="button" onclick="init()">Start</button>
+<div id="webcam-container"></div>
+<div id="label-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script type="text/javascript">
+    // More API functions here:
+    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "https://teachablemachine.withgoogle.com/models/V4HUejIFW/";
+
+    let model, webcam, labelContainer, maxPredictions;
+
+    // Load the image model and setup the webcam
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        // load the model and metadata
+        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+        // or files from your local hard drive
+        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Convenience function to setup a webcam
+        const flip = true; // whether to flip the webcam
+        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        // append elements to the DOM
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) { // and class labels
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    async function loop() {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+
+
+
+// Google Apps Script로 만든 웹 앱 URL
+const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzE9mq9-TEzU1Fn1jIpYqkiagDIYRqQYe_dJEK53_UyqT6Wjc-AFlewv4QG4FEK30Vx/exec";
+
+// 마지막 전송 시각 추적 변수
+let lastSentTime = 0;
+
+// run the webcam image through the image model
+async function predict() {
+    const prediction = await model.predict(webcam.canvas);
+    const predictionsArray = [];
+    
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+        predictionsArray.push(classPrediction);
+    }
+
+    // 현재 시각 확인
+    const now = Date.now();
+
+    // 5초(5000ms) 이상 경과했을 때만 전송
+    if (now - lastSentTime > 5000) {
+        sendPredictionToGoogleSheet(predictionsArray);
+        lastSentTime = now;
+    }
+}
+
+// Google Sheets에 예측값 전송하는 함수
+function sendPredictionToGoogleSheet(predictionsArray) {
+    fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+        method: "POST",
+        body: JSON.stringify({
+            predictions: predictionsArray
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => response.text())
+    .then(result => console.log("Google Sheet Response:", result))
+    .catch(error => console.error("Error sending to Google Sheets:", error));
+}
+
+
+
+
+
+</script>

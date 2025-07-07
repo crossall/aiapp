@@ -1,0 +1,69 @@
+﻿<script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/V4HUejIFW/";
+    const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzBcKp9BfGkfUpHT-8qZh9ORjwbhTXn4hhfzvmDocFtmItPJOFU7WRXMEjahT2b3YC3/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0; // 마지막 전송 시간 기록용
+
+    // 모델과 웹캠 초기화
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        const flip = true;
+        webcam = new tmImage.Webcam(200, 200, flip);
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    // 반복 루프
+    async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    // 예측 + Google Sheets 전송 (5초 간격)
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        const predictionsArray = [];
+
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+            predictionsArray.push(classPrediction);
+        }
+
+        const now = Date.now();
+        if (now - lastSentTime > 5000) {
+            console.log("📤 전송할 데이터:", predictionsArray);
+            sendPredictionToGoogleSheet(predictionsArray);
+            lastSentTime = now;
+        }
+    }
+
+    // Google Sheets에 데이터 전송
+    function sendPredictionToGoogleSheet(predictionsArray) {
+        console.log("🔗 전송 요청 중:", GOOGLE_SHEETS_WEBHOOK_URL);
+
+        fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+            method: "POST",
+            body: JSON.stringify({ predictions: predictionsArray }),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(response => response.text())
+        .then(result => console.log("✅ 시트 응답:", result))
+        .catch(error => console.error("❌ 전송 오류:", error));
+    }
+</script>
