@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Sheets Test</title>
+</head>
+<body>
+  <h2>Google Sheets 입력 테스트</h2>
+  <form id="testForm">
+    이름: <input type="text" name="name"><br>
+    메모: <input type="text" name="message"><br>
+    <button type="submit">보내기</button>
+  </form>
+
+  <script>
+    document.getElementById("testForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const params = new URLSearchParams(formData).toString();
+
+      fetch("https://script.google.com/macros/s/AKfycbwUHRAFzLjXkpHUuqZQgc6MbVxz-wE7FtR9t8O8FS8uHWuKykFkHSmWn4p5PsephgHC/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+      .then(response => response.text())
+      .then(result => alert("결과: " + result));
+    });
+  </script>
+</body>
+</html>
