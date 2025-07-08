@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Teachable Machine + Google Sheets</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #333;
+    }
+
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #webcam-container, #label-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 10px;
+      width: 220px;
+      text-align: center;
+    }
+
+    #label-container div {
+      font-size: 14px;
+      margin-top: 6px;
+      color: #555;
+    }
+
+    @media (max-width: 500px) {
+      #webcam-container, #label-container {
+        width: 90%;
+      }
+
+      button {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🧠 Teachable Machine Image Model</h2>
+  <button type="button" onclick="init()">Start Camera & Predict</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/KgWUQ_i4WH/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzf44_RPrIg-3G_KLhUyU-qUiyY6GHGCdGNHa5yJvLPpmFMtNswV6nIkHgY9HYk-TMmrg/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      webcam = new tmImage.Webcam(200, 200, true);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").innerHTML = "";
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      let topPrediction = { className: "", probability: 0 };
+
+      for (let i = 0; i < maxPredictions; i++) {
+        const p = prediction[i];
+        const classPrediction = `${p.className}: ${(p.probability * 100).toFixed(1)}%`;
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        sendToSheet(topPrediction.className, (topPrediction.probability * 100).toFixed(1));
+      }
+    }
+
+    function sendToSheet(className, probability) {
+      const params = new URLSearchParams();
+      params.append("name", className);
+      params.append("message", probability);
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+      .then(res => res.text())
+      .then(result => {
+        console.log("✅ 전송 성공:", className, probability, result);
+      })
+      .catch(error => {
+        console.error("❌ 전송 실패:", error);
+      });
+    }
+  </script>
+</body>
+</html>
