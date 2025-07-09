@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 친구와 놀아요!</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Comic Sans MS', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(120deg, #fffde7, #e1f5fe, #fce4ec);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    h2 {
+      color: #ff6f00;
+      font-size: 32px;
+      text-shadow: 1px 1px 2px #ffd180;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #ffcc80;
+      color: #4e342e;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      border: 3px dashed #ff6f00;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ffd54f;
+      transform: scale(1.05);
+    }
+
+    #webcam-container {
+      margin-top: 30px;
+      border: 8px dotted #4fc3f7;
+      border-radius: 16px;
+      padding: 10px;
+      background-color: #ffffffcc;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    canvas {
+      border-radius: 10px;
+    }
+
+    #label-container {
+      margin-top: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #label-container div {
+      background-color: #f8bbd0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      min-width: 220px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #6a1b9a;
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+
+    #label-container div:hover {
+      transform: scale(1.05);
+      background-color: #f48fb1;
+    }
+  </style>
+</head>
+<body>
+  <h2>🐻 AI 친구와 이미지 맞히기!</h2>
+  <button onclick="init()">🎬 시작하기</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/QGuKH9inKj/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzE_61P9NRfYOPo6K6sRbezc1zP_T19MatKC6qTEBnQfKGF9IKbx518Sq9yK2lFDqrgqQ/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      const flip = true;
+      webcam = new tmImage.Webcam(200, 200, flip);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      let topPrediction = { className: "", probability: 0 };
+
+      for (let i = 0; i < maxPredictions; i++) {
+        const p = prediction[i];
+        const classPrediction = `🎯 ${p.className}: ${(p.probability * 100).toFixed(1)}%`;
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        sendToSheet(topPrediction.className, (topPrediction.probability * 100).toFixed(1));
+      }
+    }
+
+    function sendToSheet(className, probability) {
+      const params = new URLSearchParams();
+      params.append("name", className);
+      params.append("message", probability);
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+        .then(response => response.text())
+        .then(result => {
+          console.log("✅ 전송 성공:", className, probability, result);
+        })
+        .catch(error => {
+          console.error("❌ 전송 실패:", error);
+        });
+    }
+  </script>
+</body>
+</html>

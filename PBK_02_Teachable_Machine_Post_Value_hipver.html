@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Model + Google Sheets 🚀</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #222;
+      margin-bottom: 20px;
+    }
+
+    button {
+      font-size: 1.1rem;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+
+    #webcam-container {
+      margin-bottom: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    #label-container div {
+      font-size: 1.1rem;
+      margin: 5px 0;
+      padding: 8px 15px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.1);
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 Teachable Machine + Google Sheets</h1>
+  <button id="start-button">Start AI Magic</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script>
+    // Constants 🚀
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/dzqFlYmpjo/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyHdUBSMvrtFdaGYJU976L3gCv52qLFJH2GRkoYruQFz03wogZeT0NSBGPH2f4Y9qgnHw/exec";
+    const PREDICTION_INTERVAL = 5000;
+
+    let model, webcam, labelContainer, maxPredictions, lastSentTime = 0;
+
+    // Initialize the model and webcam 🎥
+    async function init() {
+      const modelURL = `${MODEL_URL}model.json`;
+      const metadataURL = `${MODEL_URL}metadata.json`;
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      webcam = new tmImage.Webcam(300, 300, true); // Flipped webcam
+      await webcam.setup();
+      await webcam.play();
+
+      // Append webcam feed
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = ""; // Clear previous elements
+
+      // Add a prediction display area
+      for (let i = 0; i < maxPredictions; i++) {
+        const labelDiv = document.createElement("div");
+        labelContainer.appendChild(labelDiv);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    // Main prediction loop 🔄
+    async function loop() {
+      webcam.update();
+      await predict();
+      requestAnimationFrame(loop);
+    }
+
+    // Predict classes and probabilities
+    async function predict() {
+      const predictions = await model.predict(webcam.canvas);
+      let topPrediction = { className: "", probability: 0 };
+
+      predictions.forEach((p, i) => {
+        // Update prediction UI
+        const predictionText = `${p.className}: ${(p.probability * 100).toFixed(2)}%`;
+        labelContainer.childNodes[i].textContent = predictionText;
+
+        // Find the top prediction
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      });
+
+      // Send data to Google Sheets every X interval ⏱
+      const now = Date.now();
+      if (now - lastSentTime > PREDICTION_INTERVAL) {
+        lastSentTime = now;
+        sendToGoogleSheets(topPrediction.className, (topPrediction.probability * 100).toFixed(2));
+      }
+    }
+
+    // Send top prediction to Google Sheets 🚀
+    function sendToGoogleSheets(className, probability) {
+      const payload = new URLSearchParams({ name: className, message: probability });
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: payload
+      })
+      .then((response) => response.text())
+      .then((result) => {
+        console.log(`✅ Sent to Sheets: ${className} (${probability}%)`);
+      })
+      .catch((error) => {
+        console.error("❌ Failed to send data:", error);
+      });
+    }
+
+    // Event listener for start button 🔘
+    document.getElementById("start-button").addEventListener("click", init);
+  </script>
+</body>
+</html>

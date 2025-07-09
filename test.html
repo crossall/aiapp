@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Teachable Machine + Google Sheets</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 30px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #webcam-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      border: 4px solid #ccc;
+      border-radius: 10px;
+    }
+
+    #label-container {
+      max-width: 300px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 16px;
+    }
+
+    #label-container div {
+      font-size: 16px;
+      color: #444;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    #label-container div:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Teachable Machine Image Model</h2>
+  <button type="button" onclick="init()">Start</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/3fdTmCyjGw/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwTWAsQTJxJkjFdyvp35hzX9utrcwbZY370bJfZ2HkMrbUB7IkWSKFI1lEu7fPd5v_EdA/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      const flip = true;
+      webcam = new tmImage.Webcam(200, 200, flip);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      let topPrediction = { className: "", probability: 0 };
+
+      for (let i = 0; i < maxPredictions; i++) {
+        const p = prediction[i];
+        labelContainer.childNodes[i].innerHTML = `${p.className}: ${p.probability.toFixed(2)}`;
+
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        sendToSheet(topPrediction.className, topPrediction.probability.toFixed(2));
+      }
+    }
+
+    function sendToSheet(className, probability) {
+      const params = new URLSearchParams();
+      params.append("name", className);
+      params.append("message", probability);
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+      .then(response => response.text())
+      .then(result => {
+        console.log("✅ 전송 성공:", className, probability, result);
+      })
+      .catch(error => {
+        console.error("❌ 전송 실패:", error);
+      });
+    }
+  </script>
+</body>
+</html>

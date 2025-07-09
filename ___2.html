@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>🐻 Teachable Machine 예측기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"> <!-- 귀여운 폰트 -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Jua', sans-serif;
+      background: linear-gradient(to right, #fdf6f0, #ffe9f3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    h2 {
+      color: #ff6b81;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    button {
+      background-color: #ff9ff3;
+      color: #fff;
+      padding: 12px 28px;
+      font-size: 20px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #f368e0;
+      transform: scale(1.05);
+    }
+
+    #webcam-container {
+      margin-top: 30px;
+      border: 8px dashed #feca57;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 10px rgba(0,0,0,0.1);
+    }
+
+    #label-container {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .label-card {
+      background-color: #fffbea;
+      padding: 16px;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .label-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .label-card strong {
+      color: #ff6f61;
+      font-size: 20px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .label-card span {
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>📸 귀여운 Teachable Machine 예측기 🐰</h2>
+  <button type="button" onclick="init()">🌟 시작하기!</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/Iz2rS4Oc8/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbys3gtSYJ41GgOAdJ9cLlR1i88WRx0EeCsYQnRwHssnVoxse9wLyJq5ertTbu00_qOydQ/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      const flip = true;
+      webcam = new tmImage.Webcam(200, 200, flip);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = '';
+      for (let i = 0; i < maxPredictions; i++) {
+        const card = document.createElement("div");
+        card.className = "label-card";
+        card.innerHTML = `<strong>🍭 클래스</strong><span>0%</span>`;
+        labelContainer.appendChild(card);
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+
+      let topPrediction = { className: "", probability: 0 };
+
+      for (let i = 0; i < maxPredictions; i++) {
+        const p = prediction[i];
+        const card = labelContainer.childNodes[i];
+        card.querySelector("strong").innerText = `🎯 ${p.className}`;
+        card.querySelector("span").innerText = `💡 ${(p.probability * 100).toFixed(1)}%`;
+
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        sendToSheet(topPrediction.className, topPrediction.probability.toFixed(2));
+      }
+    }
+
+    function sendToSheet(className, probability) {
+      const params = new URLSearchParams();
+      params.append("name", className);
+      params.append("message", probability);
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+      .then(response => response.text())
+      .then(result => {
+        console.log("✅ 전송 성공:", className, probability, result);
+      })
+      .catch(error => {
+        console.error("❌ 전송 실패:", error);
+      });
+    }
+  </script>
+</body>
+</html>

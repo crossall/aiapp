@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>손 분별기</title>
+  <style>
+    body {
+      font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #fceabb, #f8b195); /* 파스텔 톤 그라데이션 */
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      margin-top: 20px;
+      font-size: 28px;
+      color: #2c3e50;
+    }
+
+    button {
+      background-color: #ffffffcc;
+      color: #4CAF50;
+      border: 2px solid #4CAF50;
+      padding: 12px 24px;
+      font-size: 16px;
+      margin: 20px 0;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    #webcam-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    canvas {
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    #label-container {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #label-container div {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 16px;
+      margin: 4px 0;
+      border-radius: 8px;
+      min-width: 220px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <h2>✋ 손 분별기</h2>
+  <button type="button" onclick="init()">웹캠 시작</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- Teachable Machine 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/i_vbJHFNP/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxBPjaCm30z3anvVhpitgHEj8U5LLIgJkCSAodsHIqJm4mGtw6-UNGbolpnTR7hgNUF/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      const flip = true;
+      webcam = new tmImage.Webcam(200, 200, flip);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      let topPrediction = { className: "", probability: 0 };
+
+      for (let i = 0; i < maxPredictions; i++) {
+        const p = prediction[i];
+
+        // 클래스명 번역
+        const translated = p.className === "Class 1"
+          ? "손입니다"
+          : "손이 아닌 다른 물체입니다";
+
+        const classPrediction = `${translated} (${(p.probability * 100).toFixed(1)}%)`;
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+
+        if (p.probability > topPrediction.probability) {
+          topPrediction = p;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        const finalLabel = topPrediction.className === "Class 1"
+          ? "손입니다"
+          : "손이 아닌 다른 물체입니다";
+        sendToSheet(finalLabel, topPrediction.probability.toFixed(2));
+      }
+    }
+
+    function sendToSheet(className, probability) {
+      const params = new URLSearchParams();
+      params.append("name", className);
+      params.append("message", probability);
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params
+      })
+      .then(response => response.text())
+      .then(result => {
+        console.log("✅ 전송 성공:", className, probability, result);
+      })
+      .catch(error => {
+        console.error("❌ 전송 실패:", error);
+      });
+    }
+  </script>
+</body>
+</html>

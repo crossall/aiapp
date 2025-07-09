@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>가위바위보 인식기</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Nanum Pen Script', cursive;
+      background: linear-gradient(135deg, #fce4ec, #e1f5fe);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      margin-top: 1rem;
+      color: #ff4081;
+      font-size: 2.5rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      background-color: #ffd54f;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+    }
+    #webcam-container {
+      margin-top: 1.5rem;
+      border: 5px solid #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    #label-container {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      width: 80px;
+    }
+    .label img {
+      width: 40px;
+      height: 40px;
+    }
+    .label span {
+      margin-top: 0.25rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐾 귀여운 가위바위보 인식기 🐾</h1>
+  <button type="button" onclick="init()">시작하기</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <!-- TensorFlow & Teachable Machine -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <script>
+    const URL = "https://teachablemachine.withgoogle.com/models/_JFB_arm7/";
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzAbZ36ME0FW0lkTCQ_rV6gVlklX_q7SyYhWaHvWfkeHEXRmY_Y-63b8tbY86_5S2w/exec";
+
+    let model, webcam, labelContainer, maxPredictions;
+    let lastSentTime = 0;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      webcam = new tmImage.Webcam(300, 300, true);
+      await webcam.setup();
+      await webcam.play();
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = '';
+      const icons = ['✊', '✌️']; // 가위바위보 순서에 맞춰 추가하세요
+      for (let i = 0; i < maxPredictions; i++) {
+        const div = document.createElement('div');
+        div.className = 'label';
+        div.innerHTML = `<div class="icon">${icons[i] || '❓'}</div><span>로딩...</span>`;
+        labelContainer.appendChild(div);
+      }
+      window.requestAnimationFrame(loop);
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      let topIdx = 0;
+      prediction.forEach((p, idx) => {
+        const labelDiv = labelContainer.children[idx];
+        const percent = (p.probability * 100).toFixed(0) + '%';
+        labelDiv.querySelector('span').innerText = percent;
+        if (p.probability > prediction[topIdx].probability) topIdx = idx;
+      });
+      const now = Date.now();
+      if (now - lastSentTime > 5000) {
+        lastSentTime = now;
+        const top = prediction[topIdx];
+        sendToSheet(top.className, (top.probability * 100).toFixed(0));
+      }
+    }
+
+    function sendToSheet(name, message) {
+      const params = new URLSearchParams();
+      params.append('name', name);
+      params.append('message', message);
+      fetch(SHEET_WEBAPP_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: params
+      });
+    }
+  </script>
+</body>
+</html>
