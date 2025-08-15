@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>김성준 ♥ 이윤경 결혼합니다 — 2025.10.18 괌</title>
-  <meta name="description" content="2025년 10월 18일, 괌에서 김성준 · 이윤경 결혼식에 초대합니다." />
+  <title>김성준 ♥ 이윤경 결혼합니다 — 2025.10.18 괌 블루아스테르 채플</title>
+  <meta name="description" content="2025년 10월 18일 오후 2시(괌), 괌 블루아스테르 채플에서 김성준 · 이윤경 결혼식에 초대합니다." />
   <meta name="theme-color" content="#F4EFEA" />
   <!-- Open Graph for sharing -->
   <meta property="og:title" content="김성준 ♥ 이윤경 결혼합니다" />
-  <meta property="og:description" content="2025년 10월 18일, 괌에서 뵙겠습니다." />
+  <meta property="og:description" content="2025년 10월 18일(토) 오후 2시, 괌 블루아스테르 채플에서 뵙겠습니다." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://images.unsplash.com/photo-1523395243481-163f8f6155d7?q=80&w=1600&auto=format&fit=crop" />
   <style>
@@ -48,11 +48,12 @@
     .muted{color:var(--muted)}
     .h{font-size:20px; font-weight:800; margin:0 0 10px}
     .dday{
-      display:flex; gap:10px; justify-content:center; align-items:center; margin:10px 0 0
+      display:flex; gap:10px; justify-content:center; align-items:center; margin:10px 0 0;
+      color:var(--ink); /* ✅ 카운트다운 전체 텍스트를 검정색으로 */
     }
     .dday .box{background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width:70px; text-align:center}
-    .dday .num{font-size:22px; font-weight:800}
-    .dday .lab{font-size:12px; color:var(--muted)}
+    .dday .num{font-size:22px; font-weight:800; color:var(--ink);} /* ✅ 숫자도 검정 */
+    .dday .lab{font-size:12px; color:var(--ink);}              /* ✅ 라벨도 검정 */
     .btn-bar{
       position:fixed; left:0; right:0; bottom:0; padding:10px 14px; background:rgba(255,255,255,.8); backdrop-filter: blur(10px); border-top:1px solid var(--line); z-index:50;
     }
@@ -80,7 +81,7 @@
     <div class="inner">
       <div class="badge">모바일 청첩장</div>
       <div class="names" aria-label="신랑 신부 이름">김성준<span class="amp">♥</span>이윤경</div>
-      <div class="subtitle" id="dateText">2025년 10월 18일 · 괌</div>
+      <div class="subtitle" id="dateText">2025년 10월 18일 (토) 오후 2:00 · 괌 블루아스테르 채플</div>
       <div class="meta muted" id="dowText" aria-live="polite"></div>
       <div class="dday" aria-label="디데이 카운트다운" id="countdown" role="timer"></div>
     </div>
@@ -95,23 +96,22 @@
         아름다운 시작의 날, 오셔서 따뜻한 축복으로 함께해 주세요.
       </p>
       <div class="note muted" style="margin-top:10px">
-        <strong>일시</strong> : 2025년 10월 18일 (토) <em>시간 추후 안내</em><br/>
-        <strong>장소</strong> : 괌 (Guam)
-        <!-- TODO: 위 "시간"과 아래 장소/연락처/갤러리 이미지는 실제 정보로 수정하세요. -->
+        <strong>일시</strong> : 2025년 10월 18일 (토) <strong>오후 2시</strong> (괌, UTC+10)<br/>
+        <strong>장소</strong> : 괌 블루아스테르 채플
       </div>
       <div class="grid two" style="margin-top:12px">
         <button class="pill" onclick="downloadICS()" aria-label="캘린더에 저장">📅 캘린더 저장</button>
-        <a class="pill" href="https://maps.google.com/?q=Guam" target="_blank" rel="noopener" aria-label="지도에서 보기">🗺️ 길찾기</a>
+        <a class="pill" href="https://maps.google.com/?q=Blue%20Aster%20Chapel%20Guam" target="_blank" rel="noopener" aria-label="지도에서 보기">🗺️ 길찾기</a>
       </div>
     </section>
 
     <!-- 오시는 길 -->
     <section class="card section reveal">
       <h2 class="h">오시는 길</h2>
-      <p class="muted">괌(Guam) 내 세부 예식 장소는 확정 후 안내드릴게요.</p>
+      <p class="muted">예식 장소: <strong>괌 블루아스테르 채플</strong></p>
       <div class="map" style="margin-top:10px">
-        <iframe title="Guam 지도" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps?q=Guam&hl=ko&output=embed" allowfullscreen></iframe>
+        <iframe title="Blue Aster Chapel Guam 지도" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps?q=Blue%20Aster%20Chapel%20Guam&hl=ko&output=embed" allowfullscreen></iframe>
       </div>
       <div class="note muted" style="margin-top:10px">
         해외여행 준비: 여권 만료일, ESTA/비자, 항공·숙소 예약을 확인해 주세요.
@@ -132,7 +132,7 @@
     <section class="card section reveal">
       <h2 class="h">예식 안내</h2>
       <ul>
-        <li><span class="tag">본식</span> 2025.10.18 (토) <em>시간 추후 안내</em></li>
+        <li><span class="tag">본식</span> 2025.10.18 (토) <strong>오후 2:00</strong> · 괌 블루아스테르 채플</li>
         <li><span class="tag" style="background:var(--accent-2); color:#045;">피로연</span> <em>추후 안내</em></li>
       </ul>
       <p class="muted" style="margin-top:8px">※ 현지 사정에 따라 일정이 조정될 수 있습니다.</p>
@@ -166,7 +166,7 @@
   <div class="btn-bar" role="navigation" aria-label="빠른 실행">
     <div class="btns">
       <button class="btn" onclick="downloadICS()">📅 저장</button>
-      <a class="btn" href="https://maps.google.com/?q=Guam" target="_blank" rel="noopener">🗺️ 지도</a>
+      <a class="btn" href="https://maps.google.com/?q=Blue%20Aster%20Chapel%20Guam" target="_blank" rel="noopener">🗺️ 지도</a>
       <button class="btn" onclick="shareInvite()">📣 공유</button>
       <a class="btn" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ 위로</a>
     </div>
@@ -175,23 +175,24 @@
   <script>
     // ===== 기본 데이터 =====
     const COUPLE = "김성준 ♥ 이윤경";
-    const DATE_ISO_ALLDAY = "2025-10-18"; // 종일 이벤트(괌 시간)
-    const PLACE = "괌 (Guam)";
-    const MAP_QUERY = "Guam"; // TODO: 정확한 예식 장소로 변경하세요.
+    // ✅ 예식: 2025-10-18 14:00 (괌, UTC+10)
+    const EVENT_LOCAL_ISO = "2025-10-18T14:00:00+10:00";
+    const PLACE = "괌 블루아스테르 채플";
+    const MAP_QUERY = "Blue%20Aster%20Chapel%20Guam";
     const TIMEZONE_TGT = "Pacific/Guam"; // 괌 시간대
 
-    // ===== 날짜 표시 & 요일 =====
+    // ===== 날짜 표시 & 요일/시간 =====
     (function renderDate(){
-      const dt = new Date("2025-10-18T00:00:00+10:00"); // 괌 자정
-      const fmt = new Intl.DateTimeFormat('ko-KR', {year:'numeric', month:'long', day:'numeric', timeZone: TIMEZONE_TGT});
-      const dow = new Intl.DateTimeFormat('ko-KR', {weekday:'long', timeZone: TIMEZONE_TGT}).format(dt);
-      document.getElementById('dateText').textContent = `${fmt.format(dt)} · 괌`;
-      document.getElementById('dowText').textContent = `(${dow})`;
+      const dt = new Date(EVENT_LOCAL_ISO); // 14:00 (괌)
+      const fmtDate = new Intl.DateTimeFormat('ko-KR', {year:'numeric', month:'long', day:'numeric', weekday:'long', timeZone: TIMEZONE_TGT});
+      const fmtTime = new Intl.DateTimeFormat('ko-KR', {hour:'numeric', minute:'2-digit', hour12:true, timeZone: TIMEZONE_TGT});
+      document.getElementById('dateText').textContent = `${fmtDate.format(dt)} ${fmtTime.format(dt)} · ${PLACE}`;
+      document.getElementById('dowText').textContent = ""; // 요일은 위에 포함됨
     })();
 
-    // ===== D-DAY 카운트다운 =====
+    // ===== D-DAY 카운트다운 (정확히 14:00 기준) =====
     (function countdown(){
-      const target = new Date("2025-10-18T00:00:00+10:00"); // 괌 기준 0시
+      const target = new Date(EVENT_LOCAL_ISO); // 괌 14:00을 절대시각으로 지정
       function tick(){
         const now = new Date();
         const diff = target.getTime() - now.getTime();
@@ -201,7 +202,6 @@
         const h = Math.floor((abs / (1000*60*60)) % 24);
         const m = Math.floor((abs / (1000*60)) % 60);
         const s = Math.floor((abs / 1000) % 60);
-
         const label = sign >= 0 ? '남은' : '지난';
         const html = `
           <div class="box"><div class="num">${d}</div><div class="lab">일 ${label}</div></div>
@@ -214,9 +214,11 @@
       tick(); setInterval(tick, 1000);
     })();
 
-    // ===== 캘린더 저장 (ICS 종일 이벤트) =====
+    // ===== 캘린더 저장 (ICS: 14:00~16:00, 괌 기준 2시간) =====
     function downloadICS(){
       const summary = `${COUPLE} 결혼식`;
+      const start = new Date(EVENT_LOCAL_ISO);                 // 2025-10-18 14:00 (괌)
+      const end = new Date(start.getTime() + 2*60*60*1000);    // +2시간 (원하면 조정)
       const ics =
 `BEGIN:VCALENDAR
 VERSION:2.0
@@ -224,17 +226,17 @@ PRODID:-//Mobile Invitation//KR//EN
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 DTSTAMP:${toICSDateTime(new Date())}
-DTSTART;VALUE=DATE:${DATE_ISO_ALLDAY.replaceAll('-','')}
-DTEND;VALUE=DATE:${nextDate(DATE_ISO_ALLDAY)}
+DTSTART:${toICSDateTime(start)}
+DTEND:${toICSDateTime(end)}
 SUMMARY:${summary}
 LOCATION:${PLACE}
-DESCRIPTION:${summary} - ${PLACE}
+DESCRIPTION:${summary} - ${PLACE} (괌 현지 오후 2시부터)
 END:VEVENT
 END:VCALENDAR`;
       const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `김성준_이윤경_결혼식_20251018.ics`;
+      a.href = url; a.download = `김성준_이윤경_결혼식_20251018_1400_Guam.ics`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(()=> URL.revokeObjectURL(url), 5000);
     }
@@ -242,20 +244,12 @@ END:VCALENDAR`;
       const pad = (n)=> String(n).padStart(2,'0');
       return d.getUTCFullYear() + pad(d.getUTCMonth()+1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'Z';
     }
-    function nextDate(yyyy_mm_dd){
-      const d = new Date(yyyy_mm_dd + "T00:00:00Z");
-      d.setUTCDate(d.getUTCDate()+1);
-      const y = d.getUTCFullYear();
-      const m = String(d.getUTCMonth()+1).padStart(2,'0');
-      const day = String(d.getUTCDate()).padStart(2,'0');
-      return `${y}${m}${day}`;
-    }
 
     // ===== 공유 & 링크 복사 =====
     function shareInvite(){
       const data = {
         title: '김성준 ♥ 이윤경 결혼합니다',
-        text: '2025년 10월 18일, 괌에서 뵙겠습니다.',
+        text: '2025년 10월 18일(토) 오후 2시, 괌 블루아스테르 채플에서 뵙겠습니다.',
         url: location.href
       };
       if(navigator.share){ navigator.share(data).catch(()=>{}); }
