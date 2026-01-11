@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>과학실 탈출 게임</title>
+    <style>
+        /* [스타일] 디자인을 담당하는 부분입니다 */
+        body {
+            background-color: #2c3e50; /* 어두운 남색 배경 */
+            color: white;
+            font-family: 'Ownglyph_meetme-Rg', 'Malgun Gothic', sans-serif;
+            display: flex;
+            justify_content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background-color: #34495e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 80%;
+            max-width: 500px;
+        }
+        h1 { margin-bottom: 20px; font-size: 24px; color: #f1c40f; }
+        .emoji { font-size: 80px; margin: 20px 0; display: block; }
+        input {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            width: 70%;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #c0392b; }
+        .hidden { display: none; } /* 화면 숨김용 클래스 */
+        .hint { color: #bdc3c7; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="scene-start">
+            <span class="emoji">🏫</span>
+            <h1>방과 후, 갇혀버린 과학실</h1>
+            <p>당신은 실수로 과학실에 갇혔습니다.<br>문은 단단히 잠겨있습니다.</p>
+            <button onclick="goScene('scene-1')">게임 시작</button>
+        </div>
+
+        <div id="scene-1" class="hidden">
+            <span class="emoji">🔒</span>
+            <h1>첫 번째 관문: 도어락</h1>
+            <p>문에는 숫자 키패드가 있습니다.<br>쪽지가 붙어 있네요.</p>
+            <div style="background:#fff; color:#000; padding:10px; border-radius:5px; margin:10px;">
+                "원주율(π)의 소수점 첫째 자리부터<br>셋째 자리까지 입력하시오."
+            </div>
+            <input type="text" id="answer-1" placeholder="정답을 입력하세요">
+            <br>
+            <button onclick="checkAnswer(1)">입력 확인</button>
+            <p class="hint" onclick="alert('힌트: 3.141592...')">💡 힌트 보기 (클릭)</p>
+        </div>
+
+        <div id="scene-2" class="hidden">
+            <span class="emoji">🧪</span>
+            <h1>두 번째 관문: 시약 금고</h1>
+            <p>문은 열렸지만, 열쇠가 금고 안에 있습니다.<br>화학 기호 퀴즈입니다.</p>
+            <div style="background:#fff; color:#000; padding:10px; border-radius:5px; margin:10px;">
+                "물의 화학식은 무엇인가요?<br>(영어 대문자)"
+            </div>
+            <input type="text" id="answer-2" placeholder="영어 대문자로 입력">
+            <br>
+            <button onclick="checkAnswer(2)">열쇠 꺼내기</button>
+        </div>
+
+        <div id="scene-end" class="hidden">
+            <span class="emoji">🎉</span>
+            <h1>탈출 성공!</h1>
+            <p>축하합니다!<br>무사히 과학실을 빠져나왔습니다.</p>
+            <button onclick="location.reload()">처음으로</button>
+        </div>
+    </div>
+
+    <script>
+        // [로직] 게임의 규칙을 담당하는 자바스크립트입니다
+
+        // 장면을 전환하는 함수
+        function goScene(sceneId) {
+            // 모든 장면을 숨김
+            document.querySelectorAll('.container > div').forEach(div => {
+                div.classList.add('hidden');
+            });
+            // 원하는 장면만 보여줌
+            document.getElementById(sceneId).classList.remove('hidden');
+        }
+
+        // 정답을 확인하는 함수
+        function checkAnswer(stage) {
+            if (stage === 1) {
+                const value = document.getElementById('answer-1').value;
+                if (value === "141") { // 정답: 141
+                    alert("철컥! 도어락이 해제되었습니다.");
+                    goScene('scene-2');
+                } else {
+                    alert("삐-! 틀렸습니다. 다시 생각해보세요.");
+                }
+            } else if (stage === 2) {
+                const value = document.getElementById('answer-2').value.toUpperCase(); // 대문자 변환
+                if (value === "H2O") { // 정답: H2O
+                    alert("끼이익... 금고가 열렸습니다!");
+                    goScene('scene-end');
+                } else {
+                    alert("반응이 없습니다. 화학식이 틀린 것 같습니다.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
