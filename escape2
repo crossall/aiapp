@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 방탈출 예시</title>
+    <style>
+        /* [스타일] */
+        body {
+            margin: 0;
+            background-color: #222;
+            display: flex;
+            justify_content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+
+        /* 게임 화면 컨테이너 */
+        #game-screen {
+            position: relative; /* 이것이 기준점이 됩니다 */
+            width: 800px;
+            height: 600px;
+            background-image: url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'); /* 배경 이미지 URL */
+            background-size: cover; /* 이미지를 꽉 채움 */
+            background-position: center;
+            border: 5px solid #555;
+            box-shadow: 0 0 20px #000;
+        }
+
+        /* 클릭 가능한 영역(투명 버튼) 공통 스타일 */
+        .click-zone {
+            position: absolute; /* 겹쳐서 배치하기 위한 필수 설정 */
+            cursor: pointer;
+            /* 테스트용: 실제 게임에서는 아래 배경색을 transparent로 바꾸세요 */
+            background-color: rgba(255, 0, 0, 0.3); 
+            border: 2px solid red;
+        }
+        
+        /* [중요] 각 사물별 위치 및 크기 지정 (AI가 해주는 부분) */
+        /* 노트북 위치 */
+        #zone-laptop {
+            top: 45%;    /* 위에서 45% 지점 */
+            left: 25%;   /* 왼쪽에서 25% 지점 */
+            width: 35%;  /* 너비 */
+            height: 30%; /* 높이 */
+        }
+        /* 커피잔 위치 */
+        #zone-coffee {
+            top: 60%;
+            left: 65%;
+            width: 10%;
+            height: 15%;
+            border-radius: 50%; /* 동그랗게 만듦 */
+        }
+
+        /* 힌트 모달창 스타일 */
+        #modal {
+            display: none; /* 평소엔 숨김 */
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 100;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-screen">
+        <div id="zone-laptop" class="click-zone" onclick="showHint('노트북이 켜져 있다.<br>비밀번호 힌트: 🍎🍌🍇')"></div>
+        <div id="zone-coffee" class="click-zone" onclick="showHint('식은 커피다.<br>바닥에 숫자가 쓰여있다: 7')"></div>
+    </div>
+
+    <div id="modal">
+        <p id="hint-text"></p>
+        <button onclick="closeModal()">닫기</button>
+    </div>
+
+    <script>
+        // [로직] 클릭했을 때 반응
+        function showHint(text) {
+            document.getElementById('hint-text').innerHTML = text;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
